@@ -36,7 +36,7 @@ from java.lang import System
 from ui import ParameterProcessingRulesTable
 
 
-CONTENT_PROTOBUF = ['application/x-protobuf', 'application/x-protobuffer', 'application/x-protobuffer; charset=utf-8', 'application/octet-stream', 'application/grpc-web+proto']
+CONTENT_PROTOBUF = ['application/protobuf', 'application/x-protobuf', 'application/x-protobuffer', 'application/x-protobuffer; charset=utf-8', 'application/octet-stream', 'application/grpc-web+proto']
 
 PROTO_FILENAME_EXTENSION_FILTER = FileNameExtensionFilter("*.proto, *.py",
                                                           ["proto", "py"])
