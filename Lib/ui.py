@@ -12,6 +12,13 @@ from base64 import b64encode, b64decode, urlsafe_b64encode, urlsafe_b64decode
 from binascii import hexlify, unhexlify
 from zlib import compress, decompress
 
+from urllib import unquote, quote_plus
+
+def decode_url_and_base64(to_decode):
+    return b64decode(unquote(to_decode).decode('utf8'))
+
+def encode_base64_and_url(to_encode):
+    return quote_plus(b64encode(to_encode))
 
 PARAMETER_TYPES = {
     'PARAM_BODY': IParameter.PARAM_BODY,
@@ -30,13 +37,14 @@ RULES = {
     'zlib decompress': decompress,
     'base64 encode': b64encode,
     'base64 decode': b64decode,
+    'base64 encode +  URL encoding': encode_base64_and_url,
+    'URL decode + base64 decode': decode_url_and_base64,
     'url-base64 encode': urlsafe_b64encode,
     'url-base64 decode': urlsafe_b64decode,
     'hex encode': hexlify,
     'hex decode': unhexlify,
 
 }
-
 
 class ParameterProcessingRulesTable(JPanel):
     def __init__(self, extender=None, *rows):
