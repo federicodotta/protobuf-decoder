@@ -298,7 +298,10 @@ def _StructPackDecoder(wire_type, format):
 
   def InnerDecode(buffer, pos):
     new_pos = pos + value_size
-    result = local_unpack(format, buffer[pos:new_pos])[0]
+    #result = local_unpack(format, buffer[pos:new_pos])[0]
+    # Little fix because memoryview is only partially implemented in Jython, breaking deserialization. Converting to bytearray
+    # https://github.com/msgpack/msgpack-python/issues/303
+    result = local_unpack(format, bytearray(buffer[pos:new_pos]))[0] 
     return (result, new_pos)
   return _SimpleDecoder(wire_type, InnerDecode)
 
