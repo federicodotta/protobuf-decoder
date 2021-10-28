@@ -32,8 +32,8 @@
 """
 
 import os
-import warnings
 import sys
+import warnings
 
 try:
   # pylint: disable=g-import-not-at-top
@@ -60,11 +60,25 @@ if _api_version < 0:  # Still unspecified?
       raise ImportError('_use_fast_cpp_protos import succeeded but was None')
     del _use_fast_cpp_protos
     _api_version = 2
+    from google.protobuf import use_pure_python
+    raise RuntimeError(
+        'Conflicting deps on both :use_fast_cpp_protos and :use_pure_python.\n'
+        ' go/build_deps_on_BOTH_use_fast_cpp_protos_AND_use_pure_python\n'
+        'This should be impossible via a link error at build time...')
   except ImportError:
-    if _proto_extension_modules_exist_in_build:
-      if sys.version_info[0] >= 3:  # Python 3 defaults to C++ impl v2.
-        _api_version = 2
-      # TODO(b/17427486): Make Python 2 default to C++ impl v2.
+    try:
+      # pylint: disable=g-import-not-at-top
+      from google.protobuf import use_pure_python
+      del use_pure_python  # Avoids a pylint error and namespace pollution.
+      _api_version = 0
+    except ImportError:
+      # TODO(b/74017912): It's unsafe to enable :use_fast_cpp_protos by default;
+      # it can cause data loss if you have any Python-only extensions to any
+      # message passed back and forth with C++ code.
+      #
+      # TODO(b/17427486): Once that bug is fixed, we want to make both Python 2
+      # and Python 3 default to `_api_version = 2` (C++ implementation V2).
+      pass
 
 _default_implementation_type = (
     'python' if _api_version <= 0 else 'cpp')
@@ -100,6 +114,27 @@ if _implementation_version_str != '2':
 _implementation_version = int(_implementation_version_str)
 
 
+# Detect if serialization should be deterministic by default
+try:
+  # The presence of this module in a build allows the proto implementation to
+  # be upgraded merely via build deps.
+  #
+  # NOTE: Merely importing this automatically enables deterministic proto
+  # serialization for C++ code, but we still need to export it as a boolean so
+  # that we can do the same for `_implementation_type == 'python'`.
+  #
+  # NOTE2: It is possible for C++ code to enable deterministic serialization by
+  # default _without_ affecting Python code, if the C++ implementation is not in
+  # use by this module.  That is intended behavior, so we don't actually expose
+  # this boolean outside of this module.
+  #
+  # pylint: disable=g-import-not-at-top,unused-import
+  from google.protobuf import enable_deterministic_proto_serialization
+  _python_deterministic_proto_serialization = True
+except ImportError:
+  _python_deterministic_proto_serialization = False
+
+
 # Usage of this function is discouraged. Clients shouldn't care which
 # implementation of the API is in use. Note that there is no guarantee
 # that differences between APIs will be maintained.
@@ -108,6 +143,17 @@ def Type():
   return _implementation_type
 
 
+def _SetType(implementation_type):
+  """Never use! Only for protobuf benchmark."""
+  global _implementation_type
+  _implementation_type = implementation_type
+
+
 # See comment on 'Type' above.
 def Version():
   return _implementation_version
+
+
+# For internal use only
+def IsPythonDefaultSerializationDeterministic():
+  return _python_deterministic_proto_serialization
