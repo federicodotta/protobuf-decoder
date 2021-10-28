@@ -89,7 +89,8 @@ if six.PY3:
   long = int
 else:
   import re    # pylint: disable=g-import-not-at-top
-  _SURROGATE_PATTERN = re.compile(six.u(r'[\ud800-\udfff]'))
+  #_SURROGATE_PATTERN = re.compile(six.u(r'[\ud800-\udfff]'))
+  _SURROGATE_PATTERN = re.compile(r'[\ud800-\udfff]')
 
 from google.protobuf.internal import containers
 from google.protobuf.internal import encoder
