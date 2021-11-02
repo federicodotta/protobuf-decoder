@@ -322,15 +322,15 @@ class ProtobufEditorTab(IMessageEditorTab):
         if(self.last_proto is not None):
 
             factory = message_factory.MessageFactory()
-            klass = factory.GetPrototype(self.descriptor)
+            klass = factory.GetPrototype(self.last_proto)
             klass_instance = klass()
             klass_instance.ParseFromString(body)
 
             message = klass_instance
 
-            self.tab.editor.setText(str(klass_instance))
-            self.tab.editor.setEditable(True)
-            self.tab._current = (content, message, info, parameter)
+            self.editor.setText(str(klass_instance))
+            self.editor.setEditable(True)
+            self._current = (content, message, info, parameter)
             return
         
         # 1 - Loop through all proto descriptors loaded and use the first that matches
@@ -772,8 +772,6 @@ class DeserializeProtoActionListener(ActionListener):
 def compile_and_import_proto(proto):
     curdir = os.path.abspath(os.curdir)
     tempdir = tempfile.mkdtemp()
-
-    print(str(tempdir))
 
     is_proto = os.path.splitext(proto.getName())[-1] == '.proto'
 
