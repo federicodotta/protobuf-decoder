@@ -101,6 +101,13 @@ def gUnzip(gzipcontent):
     f.close()
     return body
 
+def gZip(tozipcontent):
+    out = StringIO.StringIO()
+    gzip_s = gzip.GzipFile(fileobj=out, mode="w")
+    gzip_s.write(tozipcontent)    
+    gzip_s.close()
+    return out.getvalue()
+
 
 class BurpExtender(IBurpExtender, IMessageEditorTabFactory, ITab, IExtensionStateListener):
     EXTENSION_NAME = "Protobuf Decoder"
@@ -274,14 +281,16 @@ class ProtobufEditorTab(IMessageEditorTab):
 
         if isGzip(info):
 
-            #if isRequest:
-            #    print "Request body is using gzip: Uncompressing..."            
-            #else:
-            #    print "Response body is using gzip: Uncompressing..."            
+            if isRequest:
+                print "Request body is using gzip: Uncompressing..."            
+            else:
+                print "Response body is using gzip: Uncompressing..."            
 
-            body = gUnzip(content[info.getBodyOffset():].tostring())
+            body = array.array('B', gUnzip(content[info.getBodyOffset():].tostring()))
+
         else:
-            body = content[info.getBodyOffset():].tostring()
+
+            body = content[info.getBodyOffset():]
 
         # process parameters via rules defined in Protobuf Decoder ui tab
 
@@ -304,8 +313,9 @@ class ProtobufEditorTab(IMessageEditorTab):
                 break
 
         if parameter is None:
-            #set message
-            rawBytes = (content[info.getBodyOffset():])
+
+            rawBytes = body
+
             global oldPadding
             global hasPadding 
             hasPadding = False
@@ -462,6 +472,12 @@ class ProtobufEditorTab(IMessageEditorTab):
 
                     return self.helpers.updateParameter(content, param)
                 else:
+
+                    if(isGzip(info)):
+                        
+                        print("Recompressing gzip...")
+                        serialized = gZip(serialized)
+
                     return self.helpers.buildHttpMessage(headers, serialized)
 
             except Exception as error:
@@ -673,10 +689,9 @@ class DeserializeProtoActionListener(ActionListener):
             # gunzip the content first if required
 
             if isGzip(info):
-                body = gUnzip(content[info.getBodyOffset():].tostring())
+                body = array.array('B', gUnzip(content[info.getBodyOffset():].tostring()))
             else:
-                body = content[info.getBodyOffset():].tostring()
-                #body = content[info.getBodyOffset():]
+                body = content[info.getBodyOffset():]
 
             if parameter is not None:
                 param = self.tab.helpers.getRequestParameter(
@@ -692,7 +707,7 @@ class DeserializeProtoActionListener(ActionListener):
             if parameter is None:
 
                 # cut 5 bytes for grpc web
-                rawBytes = (content[info.getBodyOffset():])
+                rawBytes = body
                 global oldPadding
                 global hasPadding 
                 hasPadding = False
