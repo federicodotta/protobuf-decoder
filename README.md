@@ -3,11 +3,42 @@ burp-protobuf-decoder
 
 A simple Google Protobuf Decoder for Burp
 
+My fork (federicodotta)
+-------------
+
+This is a fork of the Burp Suite version of burp-protobuf-decoder with many improvements and a lot of bug fixes:
+
+- Recursive import have been added to the plugin: now if a proto depends on another one, the plugin look in the same folder to find for it. This process is recursive (all the messages showed in the previous screenshot have been recursively loaded as dependencies of a single proto file)
+- The plugin now handles nested messages (messages that contain other messages) in a recursive manner and it is possible to choose any proto of the tree for deserialization. 
+- A filter has been handled to search for a specific proto file, necessary because we had a lot of messages types and their number made them very difficult to find in the context menu
+- A lot of bug fixes in the code actually present in the Portswigger BAppStore
+- Protobuf library updated to one of the last versions compatible with Python2
+- Protobuf library has been fixed in a couple of points because it uses a bytearray Python structure not fully compatible with Jython (small patch but quite difficult to debug)
+- The extension used a deprecated way in the deserialization routines that has been replaced by a non-deprecated one
+- The plugin handles big proto files by compiling .py files in .pyc. In this way it is not necessary to manually split large python files
+- The plugin saves last proto used in a specific tab to speed up working with the Repeater
+- Proto data in HTTP parameters fixed
+- Base64 encode + URL (and viceversa) added to the supported encodings (the plugin supported only Base64 URL-safe but it is not the same and does not work in all the situations)
+- GZIP decompression fixed and GZIP compression added (the current one handled only GZIP decompression and not compression for the edited content)
+
+By default, if no message is selected, my fork gives the "raw" representation (deserialization using protoc binary without supplying any proto file) because this way I don't miss any data due to the deserialization using a wrong proto message. Two alternative implementations are included in the code (commented). The first one is the original one that tries to decode with every loaded messages, stopping on the first that does not throw an error. The second one, useful to quickly identify the right proto message to use, tries to decode the data with all the loaded proto messages without stopping on the first that matches and prints the results in the plugin standard output.
+
+Requirements:
+
+- To properly work it is necessary to manually set Python2 path in the "protoburp.py" file, in variable PYTHON2_BINARY at line 50. Python2 binary is used to compile big python proto files and overcome the python size limitations
+
+More information on our company blog: https://security.humanativaspa.it/burp-suite-and-protobuf/
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Old README (can be inaccurate)
+=====================
 
 Prerequisites
 -------------
 
-1. Burp Professional 1.7.17+
+1. Burp Professional 
 2. [Jython 2.7+](http://www.jython.org/downloads.html)
 
 
